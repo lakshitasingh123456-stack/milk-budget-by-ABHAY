@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Milk Budget</title>
+  <meta name="theme-color" content="#0ea5e9">
+  <style>
+    :root{
+      --bg:#0b1220;        /* dark indigo */
+      --card:#111827;      /* slate-900 */
+      --muted:#9ca3af;     /* gray-400 */
+      --text:#e5e7eb;      /* gray-200 */
+      --brand:#0ea5e9;     /* sky-500 */
+      --ok:#10b981;        /* emerald */
+      --warn:#f59e0b;      /* amber */
+      --danger:#ef4444;    /* red */
+      --ring: 0 0 0 3px rgba(14,165,233,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Helvetica, sans-serif;
+      background: radial-gradient(80% 60% at 50% 0%, #0c1b33 0%, var(--bg) 60%);
+      color:var(--text);
+    }
+    .wrap{max-width:900px;margin:0 auto;padding:16px 16px 80px}
+    header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin:4px 0 16px}
+    h1{font-size:22px;margin:0;display:flex;align-items:center;gap:8px}
+    .sub{color:var(--muted);font-size:13px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 30px rgba(0,0,0,.25);border-radius:16px;padding:14px;margin:10px 0}
+    .row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    label{font-size:12px;color:var(--muted);display:block;margin:4px 0}
+    input, select, button, textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0f172a;color:var(--text);outline:none}
+    input:focus, select:focus, textarea:focus{box-shadow:var(--ring);border-color:transparent}
+    button{cursor:pointer;font-weight:600;letter-spacing:.2px;border:none}
+    .btn{background:var(--brand)}
+    .btn.secondary{background:#1f2937}
+    .btn.ok{background:var(--ok)}
+    .btn.warn{background:var(--warn)}
+    .btn.danger{background:var(--danger)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .muted{color:var(--muted)}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(255,255,255,.08);font-size:12px}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th,td{text-align:left;font-size:14px;padding:10px 12px}
+    thead th{color:#cbd5e1;font-weight:600}
+    tbody tr{background:#0f172a;border:1px solid rgba(255,255,255,.08)}
+    tbody tr td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
+    tbody tr td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
+    .right{text-align:right}
+    .center{text-align:center}
+    .grid-2{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}
+    .sr-only{position:absolute;left:-10000px}
+    .foot{position:fixed;left:0;right:0;bottom:0;padding:10px;background:rgba(2,6,23,.75);backdrop-filter: blur(10px);display:flex;gap:8px;justify-content:center;border-top:1px solid rgba(255,255,255,.06)}
+    .note{font-size:12px;color:var(--muted)}
+    .spacer{height:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>🥛 Milk Budget</h1>
+      <div class="toolbar">
+        <button id="btnInstall" class="btn secondary" title="Add to Home Screen">➕ Add to Home</button>
+        <button id="btnExport" class="btn secondary" title="Export CSV">⤓ Export CSV</button>
+      </div>
+    </header>
+    <div class="sub">Enter price <b>once per month</b>. Add your milk each day in <b>kg</b> or <b>g</b>. Everything is saved on your phone.</div>
+
+    <!-- Month Setup -->
+    <section class="card">
+      <div class="row">
+        <div>
+          <label>Month</label>
+          <select id="month"></select>
+        </div>
+        <div>
+          <label>Year</label>
+          <select id="year"></select>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="grid-2">
+        <div>
+          <label>Price per kg (set once per month)</label>
+          <input id="price" type="number" step="0.01" placeholder="e.g. 56" />
+        </div>
+        <div style="align-self:end;display:flex;gap:8px">
+          <button id="saveMonth" class="btn ok">Save Month</button>
+          <button id="clearMonth" class="btn danger">Reset Month</button>
+        </div>
+      </div>
+      <div class="note" id="priceStatus">—</div>
+    </section>
+
+    <!-- Daily Entry -->
+    <section class="card">
+      <h3 style="margin:0 0 6px">Daily Entry</h3>
+      <div class="row-3">
+        <div>
+          <label>Day</label>
+          <select id="day"></select>
+        </div>
+        <div>
+          <label>Quantity</label>
+          <input id="qty" type="number" step="0.001" placeholder="e.g. 1 or 500" />
+        </div>
+        <div>
+          <label>Unit</label>
+          <select id="unit">
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+          </select>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="toolbar">
+        <button id="saveEntry" class="btn">Save / Update Day</button>
+        <button id="deleteEntry" class="btn warn">Delete Day</button>
+      </div>
+      <div class="note" id="entryStatus">—</div>
+    </section>
+
+    <!-- Report -->
+    <section class="card">
+      <h3 style="margin:0 0 6px">Monthly Report</h3>
+      <div class="row">
+        <div class="pill">Price: <b id="reportPrice">—</b> / kg</div>
+        <div class="pill right">Total: <b id="reportTotal">—</b></div>
+      </div>
+      <div class="spacer"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th class="center">Day</th>
+              <th class="right">Milk (kg)</th>
+              <th class="right">Cost</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <span class="note">Tip: After saving, open browser menu ▶ Add to Home Screen to install.</span>
+  </div>
+
+  <script>
+    // ===== Utilities =====
+    const pad = n => (n<10?"0":"")+n;
+    const today = new Date();
+    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    function daysInMonth(mIndex, year){
+      return new Date(year, mIndex+1, 0).getDate();
+    }
+
+    function keyFor(mIndex, year){
+      return `milkBudget_${year}_${pad(mIndex+1)}`; // e.g., milkBudget_2025_08
+    }
+
+    function readMonth(mIndex, year){
+      const raw = localStorage.getItem(keyFor(mIndex, year));
+      if(!raw){
+        return { price:null, entries:{} };
+      }
+      try{ return JSON.parse(raw); }catch{ return { price:null, entries:{} }; }
+    }
+
+    function writeMonth(mIndex, year, data){
+      localStorage.setItem(keyFor(mIndex, year), JSON.stringify(data));
+    }
+
+    function toKg(qty, unit){
+      const q = Number(qty)||0; return unit==='g' ? q/1000 : q;
+    }
+
+    function formatMoney(n){
+      if(isNaN(n)) return '—';
+      return new Intl.NumberFormat(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}).format(n);
+    }
+
+    // ===== DOM refs =====
+    const elMonth = document.getElementById('month');
+    const elYear = document.getElementById('year');
+    const elPrice = document.getElementById('price');
+    const elSaveMonth = document.getElementById('saveMonth');
+    const elClearMonth = document.getElementById('clearMonth');
+    const elPriceStatus = document.getElementById('priceStatus');
+
+    const elDay = document.getElementById('day');
+    const elQty = document.getElementById('qty');
+    const elUnit = document.getElementById('unit');
+    const elSaveEntry = document.getElementById('saveEntry');
+    const elDeleteEntry = document.getElementById('deleteEntry');
+    const elEntryStatus = document.getElementById('entryStatus');
+
+    const elTbody = document.getElementById('tbody');
+    const elReportPrice = document.getElementById('reportPrice');
+    const elReportTotal = document.getElementById('reportTotal');
+
+    const elExport = document.getElementById('btnExport');
+    const elInstall = document.getElementById('btnInstall');
+
+    // ===== init selects =====
+    function initSelectors(){
+      // months
+      elMonth.innerHTML = MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+      elMonth.value = today.getMonth();
+      // years (current ± 4)
+      const y0 = today.getFullYear();
+      const years = Array.from({length:9},(_,k)=>y0-4+k);
+      elYear.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+      elYear.value = y0;
+      refillDays();
+    }
+
+    function refillDays(){
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      const di = daysInMonth(m,y);
+      const cur = Number(elDay.value)||1;
+      let html='';
+      for(let d=1; d<=di; d++){ html += `<option value="${d}">${d}</option>` }
+      elDay.innerHTML = html;
+      elDay.value = Math.min(cur, di);
+    }
+
+    elMonth.addEventListener('change', ()=>{ refillDays(); loadMonth(); });
+    elYear.addEventListener('change', ()=>{ refillDays(); loadMonth(); });
+
+    // ===== load & render =====
+    function loadMonth(){
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      const data = readMonth(m,y);
+      if(data.price!=null){
+        elPrice.value = data.price;
+        elPriceStatus.textContent = `Price set for ${MONTHS[m]} ${y}: ${formatMoney(data.price)} per kg`;
+      }else{
+        elPrice.value = '';
+        elPriceStatus.textContent = 'No price set yet for this month.';
+      }
+      renderTable();
+    }
+
+    function renderTable(){
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      const data = readMonth(m,y);
+      const price = Number(data.price)||0;
+      elReportPrice.textContent = price? formatMoney(price): '—';
+
+      const di = daysInMonth(m,y);
+      let total = 0; let rows = '';
+      for(let d=1; d<=di; d++){
+        const kg = Number(data.entries[d]||0);
+        const cost = kg * price;
+        if(kg>0){ total += cost; }
+        rows += `<tr>
+          <td class="center">${d}</td>
+          <td class="right">${kg.toFixed(3)}</td>
+          <td class="right">${kg? formatMoney(cost): '—'}</td>
+        </tr>`;
+      }
+      elTbody.innerHTML = rows;
+      elReportTotal.textContent = formatMoney(total);
+    }
+
+    // ===== actions =====
+    elSaveMonth.addEventListener('click', ()=>{
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      const data = readMonth(m,y);
+      const p = Number(elPrice.value);
+      if(!(p>0)){
+        elPriceStatus.textContent = 'Enter a valid price (> 0).';
+        return;
+      }
+      data.price = p; writeMonth(m,y,data);
+      elPriceStatus.textContent = `Saved price: ${formatMoney(p)} per kg`;
+      renderTable();
+    });
+
+    elClearMonth.addEventListener('click', ()=>{
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      if(confirm('Reset this month? All entries & price will be cleared.')){
+        writeMonth(m,y,{price:null, entries:{}});
+        elPrice.value=''; elPriceStatus.textContent='Month reset.';
+        renderTable();
+      }
+    });
+
+    elSaveEntry.addEventListener('click', ()=>{
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      const data = readMonth(m,y);
+      if(!(Number(data.price)>0)){
+        elEntryStatus.textContent = 'Set the monthly price first.';
+        return;
+      }
+      const day = Number(elDay.value);
+      const kg = toKg(elQty.value, elUnit.value);
+      if(!(kg>0)){
+        elEntryStatus.textContent = 'Enter quantity > 0';
+        return;
+      }
+      data.entries[day] = Number(kg.toFixed(3));
+      writeMonth(m,y,data);
+      elEntryStatus.textContent = `Saved Day ${day}: ${kg.toFixed(3)} kg`;
+      renderTable();
+      elQty.value='';
+    });
+
+    elDeleteEntry.addEventListener('click', ()=>{
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      const data = readMonth(m,y);
+      const day = Number(elDay.value);
+      if(data.entries[day]==null){
+        elEntryStatus.textContent = 'Nothing to delete for this day.'; return;
+      }
+      if(confirm(`Delete entry for Day ${day}?`)){
+        delete data.entries[day]; writeMonth(m,y,data);
+        elEntryStatus.textContent = `Deleted Day ${day}.`;
+        renderTable();
+      }
+    });
+
+    // ===== export CSV =====
+    elExport.addEventListener('click', ()=>{
+      const m = Number(elMonth.value), y = Number(elYear.value);
+      const data = readMonth(m,y);
+      const di = daysInMonth(m,y);
+      const price = Number(data.price)||0;
+      let total = 0; let csv = `Month,${MONTHS[m]} ${y}\nPrice per kg,${price}\nDay,Milk_kg,Cost\n`;
+      for(let d=1; d<=di; d++){
+        const kg = Number(data.entries[d]||0);
+        const cost = kg*price; total += cost;
+        csv += `${d},${kg.toFixed(3)},${kg?cost.toFixed(2):''}\n`;
+      }
+      csv += `Total,,${total.toFixed(2)}\n`;
+      const blob = new Blob([csv],{type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `MilkBudget_${y}_${pad(m+1)}.csv`;
+      a.click(); URL.revokeObjectURL(url);
+    });
+
+    // ===== Add to Home Screen helper =====
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e)=>{
+      e.preventDefault(); deferredPrompt = e; elInstall.style.display='';
+    });
+    elInstall.addEventListener('click', async ()=>{
+      if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt = null; }
+      else alert('Use your browser menu → Add to Home Screen');
+    });
+
+    // ===== Manifest + Service Worker (created at runtime to keep single-file) =====
+    function createIcon(size){
+      // draw a simple icon via Canvas so manifest has images
+      const c = document.createElement('canvas'); c.width=c.height=size; const ctx=c.getContext('2d');
+      ctx.fillStyle = '#0ea5e9'; ctx.fillRect(0,0,size,size);
+      ctx.fillStyle = 'white'; ctx.font = `${Math.floor(size*0.55)}px system-ui`;
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🥛', size/2, size/2+2);
+      return c.toDataURL('image/png');
+    }
+
+    (function setupPWA(){
+      // Create manifest
+      const manifest = {
+        name: 'Milk Budget', short_name:'MilkBudget',
+        start_url: '.', display:'standalone', background_color:'#0b1220', theme_color:'#0ea5e9',
+        icons:[96,144,192,256,384,512].map(sz=>({src:createIcon(sz), sizes: `${sz}x${sz}`, type:'image/png'}))
+      };
+      const manBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+      const manURL = URL.createObjectURL(manBlob);
+      const link = document.createElement('link'); link.rel='manifest'; link.href=manURL; document.head.appendChild(link);
+
+      // Service Worker (note: needs http/https context; file:// won’t register)
+      const swCode = `
+        const CACHE='milk-app-v1';
+        self.addEventListener('install',e=>{e.waitUntil((async()=>{const c=await caches.open(CACHE); await c.addAll(['./']);})(); self.skipWaiting());});
+        self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
+        self.addEventListener('fetch',e=>{e.respondWith((async()=>{const r=await caches.match(e.request); return r||fetch(e.request);})());});
+      `;
+      const swURL = URL.createObjectURL(new Blob([swCode],{type:'text/javascript'}));
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.register(swURL).catch(()=>{});
+      }
+    })();
+
+    // ===== boot =====
+    initSelectors();
+    loadMonth();
+  </script>
+</body>
+</html>
