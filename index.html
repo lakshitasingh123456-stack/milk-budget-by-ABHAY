@@ -9,7 +9,7 @@
   --bg:#0b1220; --card:#111827; --text:#e5e7eb; --muted:#9ca3af;
   --brand:#0ea5e9; --sun:#ef4444;
 }
-body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text);}
+body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text);transition:0.3s;}
 .wrap{max-width:900px;margin:auto;padding:16px;}
 header{display:flex;align-items:center;justify-content:space-between; flex-wrap:wrap;}
 h1{font-size:22px;margin:0;display:flex;align-items:center;gap:8px;}
@@ -19,7 +19,7 @@ h1{font-size:22px;margin:0;display:flex;align-items:center;gap:8px;}
 .menu-panel{
   position:fixed; top:0; right:-260px; width:220px; height:100%;
   background:var(--card); box-shadow:-2px 0 10px rgba(0,0,0,.5);
-  transition:0.3s, opacity 0.3s; padding:10px; display:flex; flex-direction:column; gap:10px; z-index:1000;
+  transition:0.3s; padding:10px; display:flex; flex-direction:column; gap:10px; z-index:1000;
   opacity:0; overflow:hidden;
 }
 .menu-panel button{background:var(--brand); color:#fff; border:none; border-radius:6px; padding:8px; cursor:pointer;}
@@ -28,28 +28,40 @@ h1{font-size:22px;margin:0;display:flex;align-items:center;gap:8px;}
 #slideBackBtn{cursor:pointer; display:flex; justify-content:flex-end; margin-bottom:10px;}
 
 /* About Panel */
-.about-panel{
-  position:fixed; top:20%; left:50%; transform:translateX(-50%);
+.about-panel, .delete-confirm{
+  position:fixed; top:30%; left:50%; transform:translateX(-50%);
   background:var(--card); padding:16px; border-radius:12px; box-shadow:0 5px 15px rgba(0,0,0,.5);
-  display:none; z-index:2000;
+  display:none; z-index:2000; max-width:300px; text-align:center;
 }
 .about-panel h3{margin-top:0;color:var(--brand);}
-.about-panel button{margin-top:10px;background:var(--brand);color:#fff;border:none;border-radius:6px;padding:6px;cursor:pointer;}
+.about-panel button,.delete-confirm button{margin-top:10px;background:var(--brand);color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
 
 /* Cards */
 .card{background:var(--card);border-radius:16px;padding:14px;margin:10px 0;}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#0f172a;border:1px solid rgba(255,255,255,.08);font-size:12px;margin:2px;}
-input[type=number]{width:60px;background:#00000090;color:#e5e7eb;border:none;text-align:right;border-radius:6px;padding:2px;}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:var(--card);border:1px solid rgba(255,255,255,.08);font-size:12px;margin:2px;}
+
+/* Inputs */
+input[type=number]{
+  width:60px;
+  background:var(--card);
+  color:var(--text);
+  border:1px solid var(--brand);
+  text-align:right;
+  border-radius:6px;
+  padding:2px;
+}
 input[type=number]:focus{outline:1px solid var(--brand);}
-select{background:#0b1220;color:#e5e7eb;border:1px solid var(--brand);border-radius:6px;padding:2px;margin-right:8px;}
+select{background:var(--card);color:var(--text);border:1px solid var(--brand);border-radius:6px;padding:2px;margin-right:8px;}
 table{width:100%;border-collapse:separate;border-spacing:0 8px;}
 th,td{padding:8px; font-size:14px;}
-thead th{color:#cbd5e1;}
-tbody tr{background:#0f172a;border-radius:10px;transition:0.2s;}
+thead th{color:var(--muted); text-align:left;} /* ✅ Fix: align headers left */
+tbody tr{background:var(--card);border-radius:10px;transition:0.2s;}
 tbody tr.sun td{background:var(--sun);color:#fff;}
 .report-total{margin-bottom:8px;font-weight:bold;}
 button.inline{margin-top:4px;padding:4px 8px;font-size:12px;}
 @media(max-width:600px){h1{font-size:18px}table th,table td{font-size:12px;padding:6px;} input[type=number]{width:45px;}}
+/* Light Theme */
+body.light{--bg:#f9fafb; --card:#ffffff; --text:#111827; --muted:#374151; --brand:#2563eb; --sun:#ef4444;}
 </style>
 </head>
 <body>
@@ -61,15 +73,15 @@ button.inline{margin-top:4px;padding:4px 8px;font-size:12px;}
 
   <!-- Slide-out menu panel -->
   <div class="menu-panel" id="menuPanel">
-    <!-- Slide back SVG button -->
     <div id="slideBackBtn">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"></polyline>
       </svg>
     </div>
-
     <button id="aboutBtn">About</button>
     <button id="deleteBtn">Delete Month</button>
+    <button id="themeToggle">Change Theme</button>
+
     <!-- Delete Month Section -->
     <div id="deleteSection" style="display:none;margin-top:10px;">
       <label>Month: <select id="delMonth"></select></label><br>
@@ -83,11 +95,18 @@ button.inline{margin-top:4px;padding:4px 8px;font-size:12px;}
     <h3>About Milk Budget App</h3>
     <p>Created by Abhay Pratap Singh.<br>
     Tracks daily milk consumption and monthly cost.<br>
-    Helps you to calculate your milk expenses</p>
+    Helps you calculate milk expenses.</p>
     <button id="closeAbout">Close</button>
   </div>
 
-  <!-- Month/Year Selector for report -->
+  <!-- Custom Delete Confirm Panel -->
+  <div class="delete-confirm" id="deleteConfirm">
+    <p id="deleteMsg"></p>
+    <button id="deleteYes">Yes</button>
+    <button id="deleteNo">No</button>
+  </div>
+
+  <!-- Month/Year Selector -->
   <section class="card" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <label>Month: <select id="monthSelect"></select></label>
     <label>Year: <select id="yearSelect"></select></label>
@@ -95,15 +114,16 @@ button.inline{margin-top:4px;padding:4px 8px;font-size:12px;}
 
   <!-- Price Section -->
   <section class="card" style="display:flex;justify-content:flex-start;align-items:center;">
-    <div class="pill">Price per kg: <input type="number" id="priceInput" min="0" step="0.01"></div>
+    <div class="pill">Price per kg: <input type="number" id="priceInput" min="0" step="0.01" placeholder=""></div>
   </section>
 
   <!-- Report Table -->
   <section class="card">
+    <div class="report-total">Total Milk (kg): <b id="reportMilk">0.000</b></div>
     <div class="report-total">Total Rs₹: <b id="reportTotal">0.00</b></div>
     <table>
       <thead>
-        <tr><th>Day</th><th>Milk (kg)</th><th>Cost</th></tr>
+        <tr><th>Day</th><th>Morning (kg)</th><th>Night (kg)</th><th>Cost</th></tr>
       </thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -125,12 +145,18 @@ const delMonth=document.getElementById('delMonth');
 const delYear=document.getElementById('delYear');
 const aboutPanel=document.getElementById('aboutPanel');
 const closeAbout=document.getElementById('closeAbout');
+const deleteConfirm=document.getElementById('deleteConfirm');
+const deleteMsg=document.getElementById('deleteMsg');
+const deleteYes=document.getElementById('deleteYes');
+const deleteNo=document.getElementById('deleteNo');
+const themeToggle=document.getElementById('themeToggle');
 
 const monthSelect=document.getElementById('monthSelect');
 const yearSelect=document.getElementById('yearSelect');
 const tbody=document.getElementById('tbody');
 const priceInput=document.getElementById('priceInput');
 const totalEl=document.getElementById('reportTotal');
+const milkEl=document.getElementById('reportMilk');
 
 let selectedMonth=today.getMonth();
 let selectedYear=today.getFullYear();
@@ -141,37 +167,50 @@ monthSelect.value=selectedMonth; delMonth.value=selectedMonth;
 for(let y=today.getFullYear()-5;y<=today.getFullYear()+5;y++){yearSelect.innerHTML+=`<option value="${y}">${y}</option>`; delYear.innerHTML+=`<option value="${y}">${y}</option>`;}
 yearSelect.value=selectedYear; delYear.value=selectedYear;
 
-// LocalStorage functions
-function loadData(m,y){let d=JSON.parse(localStorage.getItem(`milkBudget_${y}_${m}`)||'{}');if(!d.price)d.price=0;if(!d.entries)d.entries={};return d;}
+// LocalStorage
+function loadData(m,y){
+  let d=JSON.parse(localStorage.getItem(`milkBudget_${y}_${m}`)||'{}');
+  if(!d.price)d.price=0;
+  if(!d.entries)d.entries={};
+  return d;
+}
 function saveData(m,y,d){localStorage.setItem(`milkBudget_${y}_${m}`,JSON.stringify(d));}
 
 // Render table
 function renderTable(){
   let data=loadData(selectedMonth,selectedYear);
-  priceInput.value=data.price;
-  let total=0;
-  let rows='';
+
+  if(data.price>0){priceInput.value=data.price;} else{priceInput.value="";}
+
+  let total=0, totalMilk=0, rows='';
   const dim=new Date(selectedYear,selectedMonth+1,0).getDate();
   for(let d=1;d<=dim;d++){
     const dayDate=new Date(selectedYear,selectedMonth,d);
     const dayName=DAYS[dayDate.getDay()];
-    const kg=data.entries[d]||0;
-    const cost=kg*data.price;
-    total+=cost;
+    const entry=data.entries[d]||{morning:0,night:0};
+    const morning=entry.morning||0;
+    const night=entry.night||0;
+    const dayMilk=morning+night;
+    const cost=dayMilk*data.price;
+    total+=cost; totalMilk+=dayMilk;
     const sun=dayDate.getDay()===0?'sun':'';
     rows+=`<tr class="${sun}">
       <td>${dayName} ${d}</td>
-      <td><input type="number" min="0" step="0.001" data-day="${d}" value=""></td>
-      <td>${kg?cost.toFixed(2):'—'}</td>
+      <td><input type="number" min="0" step="0.001" data-day="${d}" data-type="morning" ${morning?`value="${morning}"`:""} placeholder=""></td>
+      <td><input type="number" min="0" step="0.001" data-day="${d}" data-type="night" ${night?`value="${night}"`:""} placeholder=""></td>
+      <td>${dayMilk?cost.toFixed(2):'—'}</td>
     </tr>`;
   }
   tbody.innerHTML=rows;
   totalEl.textContent=total.toFixed(2);
+  milkEl.textContent=totalMilk.toFixed(3);
 
   tbody.querySelectorAll('input[type=number]').forEach(input=>{
     input.oninput=()=>{
       const day=input.dataset.day;
-      data.entries[day]=parseFloat(input.value)||0;
+      const type=input.dataset.type;
+      if(!data.entries[day]) data.entries[day]={morning:0,night:0};
+      data.entries[day][type]=parseFloat(input.value)||0;
       updateCosts(data);
       saveData(selectedMonth,selectedYear,data);
     }
@@ -184,48 +223,52 @@ function renderTable(){
 }
 
 function updateCosts(data){
-  let total=0;
+  let total=0,totalMilk=0;
   tbody.querySelectorAll('tr').forEach(tr=>{
-    const input=tr.querySelector('input[type=number]');
-    const kg=parseFloat(input.value)||0;
-    const costTd=tr.children[2];
-    const cost=kg*data.price;
-    costTd.textContent=kg?cost.toFixed(2):'—';
-    total+=cost;
+    const inputs=tr.querySelectorAll('input[type=number]');
+    let morning=parseFloat(inputs[0].value)||0;
+    let night=parseFloat(inputs[1].value)||0;
+    const costTd=tr.children[3];
+    const dayMilk=morning+night;
+    const cost=dayMilk*data.price;
+    costTd.textContent=dayMilk?cost.toFixed(2):'—';
+    total+=cost; totalMilk+=dayMilk;
   });
   totalEl.textContent=total.toFixed(2);
+  milkEl.textContent=totalMilk.toFixed(3);
 }
 
-// Menu toggle with opacity fade
-menuBtn.onclick=()=>{
-  menuPanel.style.right='0px';
-  menuPanel.style.opacity='1';
-};
-slideBackBtn.onclick=()=>{
-  menuPanel.style.right='-220px';
-  menuPanel.style.opacity='0';
-};
+// Menu toggle
+menuBtn.onclick=()=>{menuPanel.style.right='0px';menuPanel.style.opacity='1';};
+slideBackBtn.onclick=()=>{menuPanel.style.right='-260px';menuPanel.style.opacity='0';};
 
-// About panel
+// About
 aboutBtn.onclick=()=>{aboutPanel.style.display='block';};
 closeAbout.onclick=()=>{aboutPanel.style.display='none';};
 
-// Delete toggle
+// Delete
 deleteBtn.onclick=()=>{deleteSection.style.display = deleteSection.style.display==='block'?'none':'block';};
 document.getElementById('delConfirmBtn').onclick=()=>{
-  const m=parseInt(delMonth.value); const y=parseInt(delYear.value);
-  if(confirm(`Delete all data for ${MONTHS[m]} ${y}?`)){
-    localStorage.removeItem(`milkBudget_${y}_${m}`);
-    if(selectedMonth===m && selectedYear===y) renderTable();
-    deleteSection.style.display='none';
-  }
+  const m=parseInt(delMonth.value), y=parseInt(delYear.value);
+  deleteMsg.textContent=`Delete all data for ${MONTHS[m]} ${y}?`;
+  deleteConfirm.style.display='block';
 };
+deleteYes.onclick=()=>{
+  const m=parseInt(delMonth.value), y=parseInt(delYear.value);
+  localStorage.removeItem(`milkBudget_${y}_${m}`);
+  if(selectedMonth===m && selectedYear===y) renderTable();
+  deleteConfirm.style.display='none'; deleteSection.style.display='none';
+};
+deleteNo.onclick=()=>{deleteConfirm.style.display='none';};
+
+// Theme toggle
+themeToggle.onclick=()=>{document.body.classList.toggle('light');};
 
 // Month/Year change
 monthSelect.onchange=()=>{selectedMonth=parseInt(monthSelect.value); renderTable();};
 yearSelect.onchange=()=>{selectedYear=parseInt(yearSelect.value); renderTable();};
 
-// Initial render
+// Init
 renderTable();
 </script>
 </body>
